@@ -32,10 +32,10 @@ int delaybw = 50; //high current draw protection
 #define rlh0 83
 #define rrh0 83
 
-#define frh22p5 (frh90-frh0)/4
-#define flh22p5 (flh90-flh0)/4
-#define rlh22p5 (rlh90-rlh0)/4
-#define rrh22p5 (rrh90-rrh0)/4
+#define frh1deg (frh90-frh0)/90
+#define flh1deg (flh90-flh0)/90
+#define rlh1deg (rlh90-rlh0)/90
+#define rrh1deg (rrh90-rrh0)/90
 
 //LEGS
 #define frl90 155
@@ -48,28 +48,39 @@ int delaybw = 50; //high current draw protection
 #define rll0 54
 #define rrl0 95
 
-#define frl22p5 (frl90-frl0)/4
-#define fll22p5 (fll90-fll0)/4
-#define rll22p5 (rll90-rll0)/4
-#define rrl22p5 (rrl90-rrl0)/4
+#define frl1deg (frl90-frl0)/90
+#define fll1deg (fll90-fll0)/90
+#define rll1deg (rll90-rll0)/90
+#define rrl1deg (rrl90-rrl0)/90
+
+long getfrh(long x) { return x * frh1deg + frh0; }
+long getflh(long x) { return x * flh1deg + flh0; }
+long getrlh(long x) { return x * rlh1deg + rlh0; }
+long getrrh(long x) { return x * rrh1deg + rrh0; }
+long getfrl(long x) { return x * frl1deg + frl0; }
+long getfll(long x) { return x * fll1deg + fll0; }
+long getrll(long x) { return x * rll1deg + rll0; }
+long getrrl(long x) { return x * rrl1deg + rrl0; }
 
 void setup()
 {
   Serial.begin(9600);
   pinMode(13, OUTPUT);  // LED pin
-  // assign servos to pins and center servos
-  frh.attach(5); frh.write(frh0+frh22p5*2); delay(delaybw);
-  frl.attach(6); frl.write(frl90-frl22p5); delay(delaybw);
-  flh.attach(7); flh.write(flh0+flh22p5*2); delay(delaybw);
-  fll.attach(8); fll.write(fll90-fll22p5); delay(delaybw);
-  rlh.attach(9); rlh.write(rlh0+rlh22p5*2); delay(delaybw);
-  rll.attach(10); rll.write(rll90-rll22p5); delay(delaybw);
-  rrh.attach(11); rrh.write(rrh0+rrh22p5*2); delay(delaybw);
-  rrl.attach(12); rrl.write(rrl90-rrl22p5); delay(delaybw);
   
-
+  // assign servos to pins and reposition
+  frh.attach(5); frh.write(getfrh(45)); delay(delaybw);
+  frl.attach(6); frl.write(getfrl(70)); delay(delaybw);
+  flh.attach(7); flh.write(getflh(45)); delay(delaybw);
+  fll.attach(8); fll.write(getfll(70)); delay(delaybw);
+  rlh.attach(9); rlh.write(getrlh(45)); delay(delaybw);
+  rll.attach(10); rll.write(getrll(70)); delay(delaybw);
+  rrh.attach(11); rrh.write(getrrh(45)); delay(delaybw);
+  rrl.attach(12); rrl.write(getrrl(70)); delay(delaybw);
+  
   delay(2000);
 }
+
+
 
 
 
