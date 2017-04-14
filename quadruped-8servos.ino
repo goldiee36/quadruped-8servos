@@ -64,7 +64,7 @@ long getrll(long x) { return x * rll1deg + rll0; }
 long getrrl(long x) { return x * rrl1deg + rrl0; }
 
 unsigned long movementStartTime;
-unsigned int movementSpeed = 10000;
+unsigned int movementSpeed = 1000;
 
 
 void setup()
@@ -112,6 +112,8 @@ void setServoForward() {
   int legMaxRaise = 25;
   int legsOnGround = 70;
   int legMovementDuration =  75; //for raising a leg or moving the hip into a new position while the leg is raised
+  int hipMin = -23;
+  int hipMax = 45;
 
   unsigned long elapsedTime = millis()-movementStartTime;
   for ( int leg = 4 ; leg >= 1 ; leg-- ) {
@@ -145,35 +147,29 @@ void setServoForward() {
           case 2:
             rll.write(getrll(legsOnGround));
             break;
-          case 1;
+          case 1:
             fll.write(getfll(legsOnGround));
             break;
-        } //switch
+        } //switch end
       //move hip
-      } //if
+      } //if end
       switch (leg) {
       case 4:
-        rrh.write(getrrh( map(  currentTimePosition,0,movementSpeed,-23,45) ));
-        //Serial.println(map(  currentTimePosition,0,movementSpeed,-23,45));
+        rrh.write(getrrh( map( currentTimePosition,0,movementSpeed,hipMin,hipMax) ));
         break;
       case 3:
-        frh.write(getfrh( map( currentTimePosition,0,movementSpeed,45,-23) ));
-        //Serial.println(map( currentTimePosition,0,movementSpeed,45,-23));
+        frh.write(getfrh( map( currentTimePosition,0,movementSpeed,hipMax,hipMin) ));
         break;
       case 2:
-        rlh.write(getrlh( map(  currentTimePosition,0,movementSpeed,-23,45) ));
-        //Serial.println(map(  currentTimePosition,0,movementSpeed,-23,45));
+        rlh.write(getrlh( map( currentTimePosition,0,movementSpeed,hipMin,hipMax) ));
         break;
       case 1:
-        flh.write(getflh( map(  currentTimePosition,0,movementSpeed,45,-23) ));
-        Serial.println(map(  currentTimePosition,0,movementSpeed,45,-23));
-        Serial.println(millis());
-        Serial.println(currentTimePosition);
+        flh.write(getflh( map( currentTimePosition,0,movementSpeed,hipMax,hipMin) ));
         break;
-      } //switch
-    } //else
+      } //switch end
+    } //else end
 
-  } //for
+  } //for end
 }
 
  /*Serial.println( map( (millis()-movementStartTime-(movementSpeed/4))%movementSpeed ,0,movementSpeed,45,-23) );*/
