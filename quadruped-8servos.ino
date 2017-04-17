@@ -54,14 +54,48 @@ int delaybw = 50; //high current draw protection
 #define rll1deg (rll90-rll0)/90
 #define rrl1deg (rrl90-rrl0)/90
 
-long getfrh(long x) { return x * frh1deg + frh0; }
-long getflh(long x) { return x * flh1deg + flh0; }
-long getrlh(long x) { return x * rlh1deg + rlh0; }
-long getrrh(long x) { return x * rrh1deg + rrh0; }
-long getfrl(long x) { return x * frl1deg + frl0; }
-long getfll(long x) { return x * fll1deg + fll0; }
-long getrll(long x) { return x * rll1deg + rll0; }
-long getrrl(long x) { return x * rrl1deg + rrl0; }
+long getfrh(long degree) { return degree * frh1deg + frh0; }
+long getflh(long degree) { return degree * flh1deg + flh0; }
+long getrlh(long degree) { return degree * rlh1deg + rlh0; }
+long getrrh(long degree) { return degree * rrh1deg + rrh0; }
+long getfrl(long degree) { return degree * frl1deg + frl0; }
+long getfll(long degree) { return degree * fll1deg + fll0; }
+long getrll(long degree) { return degree * rll1deg + rll0; }
+long getrrl(long degree) { return degree * rrl1deg + rrl0; }
+
+void setHip(byte hip, int degree) {
+  switch (hip) {
+        case 1:
+          frh.write(getfrh(degree));
+          break;
+        case 2:
+          flh.write(getflh(degree));
+          break;
+        case 3:
+          rlh.write(getrlh(degree));
+          break;
+        case 4:
+          rrh.write(getrrh(degree));
+          break;
+      }     
+}
+
+void setLeg(byte leg, int degree) {
+  switch (leg) {
+        case 1:
+          frl.write(getfrl(degree));
+          break;
+        case 2:
+          fll.write(getfll(degree));
+          break;
+        case 3:
+          rll.write(getrll(degree));
+          break;
+        case 4:
+          rrl.write(getrrl(degree));
+          break;
+      }     
+}
 
 unsigned long movementStartTime;
 unsigned int movementSpeed = 1000;
@@ -73,21 +107,19 @@ void setup()
   pinMode(13, OUTPUT);  // LED pin
   
   // assign servos to pins and reposition
-  frh.attach(5); frh.write(getfrh(0)); delay(delaybw);
+  frh.attach(5); frh.write(getfrh(-6)); delay(delaybw);
   frl.attach(6); frl.write(getfrl(70)); delay(delaybw);
-  flh.attach(7); flh.write(getflh(45)); delay(delaybw);
+  flh.attach(7); flh.write(getflh(28)); delay(delaybw);
   fll.attach(8); fll.write(getfll(70)); delay(delaybw);
-  rlh.attach(9); rlh.write(getrlh(0)); delay(delaybw);
+  rlh.attach(9); rlh.write(getrlh(11)); delay(delaybw);
   rll.attach(10); rll.write(getrll(70)); delay(delaybw);
   rrh.attach(11); rrh.write(getrrh(45)); delay(delaybw);
   rrl.attach(12); rrl.write(getrrl(70)); delay(delaybw);
   
   delay(2000);
   movementStartTime = millis();
-  delay(50);
-  setServoForward();
-  Serial.println(millis());
-  Serial.println(movementStartTime);
+  setServoMovement();
+  //delay(1000000);
 }
 
 
@@ -96,7 +128,7 @@ int delayw = 50;
 
 
 void loop() {
-  setServoForward();
+  setServoMovement();
 }
 
 
@@ -108,124 +140,48 @@ void setMovementSpeed() {
   
 }
 
-void setServoForward() {
+void setServoMovement() {
   int legMaxRaise = 25;
   int legsOnGround = 70;
-  int legMovementDuration =  75; //for raising a leg or moving the hip into a new position while the leg is raised
-  int hipMin = -23;
-  int hipMax = 45;
+  int legMovementDuration =  75; //for raising a leg
+  int hipMovementDuration =  75; //for moving the hip into a new position while the leg is raised
+
+   //forward values:
+  /*byte legOrder[] = {4, 1, 3, 2};
+  int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
+  int hipMax[] = {45, -23, 45, -23};*/
+
+   //backward values:
+  /*byte legOrder[] = {2, 3, 1, 4};
+  int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
+  int hipMax[] = {45, -23, 45, -23};*/
+
+   //left values:
+  /*byte legOrder[] = {1, 2, 4, 3};
+  int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+  int hipMax[] = {23, 90, 23, 90};*/
+
+   //right values:
+  byte legOrder[] = {3, 4, 2, 1};
+  int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+  int hipMax[] = {23, 90, 23, 90};
 
   unsigned long elapsedTime = millis()-movementStartTime;
-  for ( int leg = 4 ; leg >= 1 ; leg-- ) {
+  for ( int leg = 0 ; leg <= 3 ; leg++ ) {
     unsigned int currentTimePosition;
-    currentTimePosition = (millis()-movementStartTime+(movementSpeed/4*leg))%movementSpeed;
-    if (currentTimePosition <= legMovementDuration) { //leg needs to be rised
-      switch (leg) {
-        case 4:
-          rrl.write(getrrl(legMaxRaise));
-          break;
-        case 3:
-          frl.write(getfrl(legMaxRaise));
-          break;
-        case 2:
-          rll.write(getrll(legMaxRaise));
-          break;
-        case 1:
-          fll.write(getfll(legMaxRaise));
-          break;
-      }      
+    currentTimePosition = (millis()-movementStartTime+((movementSpeed/4)*(4-leg)))%movementSpeed;
+    Serial.println(map( currentTimePosition,0,movementSpeed,hipMin,hipMax));
+    if (currentTimePosition <= legMovementDuration) { //a leg needs to be rised, no hip movement during this
+      setLeg(legOrder[leg], legMaxRaise); 
     }
-    else {
-      if ( currentTimePosition >= legMovementDuration*2 ) { //put down leg
-        switch (leg) {
-          case 4:
-            rrl.write(getrrl(legsOnGround));
-            break;
-          case 3:
-            frl.write(getfrl(legsOnGround));
-            break;
-          case 2:
-            rll.write(getrll(legsOnGround));
-            break;
-          case 1:
-            fll.write(getfll(legsOnGround));
-            break;
-        } //switch end
+    else { //hip can be moved again (during putting down the leg too)
+      if ( currentTimePosition >= legMovementDuration+hipMovementDuration ) { //put down leg
+        setLeg(legOrder[leg], legsOnGround);
+      }
       //move hip
-      } //if end
-      switch (leg) {
-      case 4:
-        rrh.write(getrrh( map( currentTimePosition,0,movementSpeed,hipMin,hipMax) ));
-        break;
-      case 3:
-        frh.write(getfrh( map( currentTimePosition,0,movementSpeed,hipMax,hipMin) ));
-        break;
-      case 2:
-        rlh.write(getrlh( map( currentTimePosition,0,movementSpeed,hipMin,hipMax) ));
-        break;
-      case 1:
-        flh.write(getflh( map( currentTimePosition,0,movementSpeed,hipMax,hipMin) ));
-        break;
-      } //switch end
-    } //else end
-
-  } //for end
+      setHip( legOrder[leg] , map(currentTimePosition,0,movementSpeed,hipMin[leg],hipMax[leg]) );
+    }
+  }
+  
 }
-
- /*Serial.println( map( (millis()-movementStartTime-(movementSpeed/4))%movementSpeed ,0,movementSpeed,45,-23) );*/
-
-void loop2() 
-{
-  rrl.write(getrrl(45)); //láb fel
-
-  delay(delayw);
-  
-  rrh.write(getrrh(-23));
-  frh.write(getfrh(-23));
-  rlh.write(getrlh(23));
-  flh.write(getflh(23));
-
-  delay(delayw);
-
-  rrl.write(getrrl(70)); //láb le
-  frl.write(getfrl(45)); //láb fel
-
-  delay(delayw);
-
-  rrh.write(getrrh(0));
-  frh.write(getfrh(45));
-  rlh.write(getrlh(45));
-  flh.write(getflh(0));
-
-  delay(delayw);
-  
-  frl.write(getfrl(70)); //láb le
-  rll.write(getrll(45)); //láb fel
-
-  delay(delayw);
-  
-  rrh.write(getrrh(23));
-  frh.write(getfrh(23));
-  rlh.write(getrlh(-23));
-  flh.write(getflh(-23));
-
-  delay(delayw);
-
-  rll.write(getrll(70)); //láb le
-  fll.write(getfll(45)); //láb fel
-
-  delay(delayw);
-  
-  rrh.write(getrrh(45));
-  frh.write(getfrh(0));
-  rlh.write(getrlh(0));
-  flh.write(getflh(45));
-
-  delay(delayw);
-
-  fll.write(getfll(70)); //láb le
-  
-  delay(50);
-}
-
 
