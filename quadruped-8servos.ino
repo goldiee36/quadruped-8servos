@@ -18,9 +18,6 @@ Servo rll;
 Servo rrh;
 Servo rrl;
 
-int delaybw = 50; //high current draw protection
-
-
 // CALIBRATION
 // HIPS
 #define frh90 171
@@ -98,8 +95,6 @@ void setLeg(byte leg, int degree) {
 }
 
 unsigned long movementStartTime;
-unsigned int movementSpeed = 1000;
-
 
 void setup()
 {
@@ -107,14 +102,14 @@ void setup()
   pinMode(13, OUTPUT);  // LED pin
   
   // assign servos to pins and reposition
-  frh.attach(5); frh.write(getfrh(-6)); delay(delaybw);
-  frl.attach(6); frl.write(getfrl(70)); delay(delaybw);
-  flh.attach(7); flh.write(getflh(28)); delay(delaybw);
-  fll.attach(8); fll.write(getfll(70)); delay(delaybw);
-  rlh.attach(9); rlh.write(getrlh(11)); delay(delaybw);
-  rll.attach(10); rll.write(getrll(70)); delay(delaybw);
-  rrh.attach(11); rrh.write(getrrh(45)); delay(delaybw);
-  rrl.attach(12); rrl.write(getrrl(70)); delay(delaybw);
+  frh.attach(5); frh.write(getfrh(-6)); delay(50);
+  frl.attach(6); frl.write(getfrl(70)); delay(50);
+  flh.attach(7); flh.write(getflh(28)); delay(50);
+  fll.attach(8); fll.write(getfll(70)); delay(50);
+  rlh.attach(9); rlh.write(getrlh(11)); delay(50);
+  rll.attach(10); rll.write(getrll(70)); delay(50);
+  rrh.attach(11); rrh.write(getrrh(45)); delay(50);
+  rrl.attach(12); rrl.write(getrrl(70)); delay(50);
   
   delay(2000);
   movementStartTime = millis();
@@ -124,54 +119,58 @@ void setup()
 
 
 
-int delayw = 50;
-
 
 void loop() {
   setServoMovement();
 }
 
+//changing between movements: set new direction, speed. check current servo values. calculate 8-10 lineary distributed samples during the new movement.
+//compare samples with current values, find the closest match. set the legs to the new choosen position individually without changing the orientation of the spider
+//continue movement from this position
 
-void setMovementStartTime() {
-  
-}
+unsigned int movementSpeed = 1000; //time for advancing for all 4 leg. bigger values are slower
+int legMaxRaise = 25;
+int legsOnGround = 70;
+int legMovementDuration =  50; //for raising a leg
+int hipMovementDuration =  75; //for moving the hip into a new position while the leg is raised
 
-void setMovementSpeed() {
-  
-}
+ //move forward values:
+/*byte legOrder[] = {4, 1, 3, 2};
+int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
+int hipMax[] = {45, -23, 45, -23};*/
+
+ //move backward values:
+/*byte legOrder[] = {2, 3, 1, 4};
+int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
+int hipMax[] = {45, -23, 45, -23};*/
+
+ //move left values:
+/*byte legOrder[] = {1, 2, 4, 3};
+int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+int hipMax[] = {23, 90, 23, 90};*/
+
+ //move right values:
+/*byte legOrder[] = {3, 4, 2, 1};
+int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+int hipMax[] = {23, 90, 23, 90};*/
+
+ //turn left values:
+byte legOrder[] = {3, 4, 2, 1};
+int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+int hipMax[] = {23, 90, 23, 90};
+
+ //turn right values:
+/*byte legOrder[] = {3, 4, 2, 1};
+int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
+int hipMax[] = {23, 90, 23, 90};*/
 
 void setServoMovement() {
-  int legMaxRaise = 25;
-  int legsOnGround = 70;
-  int legMovementDuration =  75; //for raising a leg
-  int hipMovementDuration =  75; //for moving the hip into a new position while the leg is raised
-
-   //forward values:
-  /*byte legOrder[] = {4, 1, 3, 2};
-  int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
-  int hipMax[] = {45, -23, 45, -23};*/
-
-   //backward values:
-  /*byte legOrder[] = {2, 3, 1, 4};
-  int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
-  int hipMax[] = {45, -23, 45, -23};*/
-
-   //left values:
-  /*byte legOrder[] = {1, 2, 4, 3};
-  int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-  int hipMax[] = {23, 90, 23, 90};*/
-
-   //right values:
-  byte legOrder[] = {3, 4, 2, 1};
-  int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-  int hipMax[] = {23, 90, 23, 90};
-
   unsigned long elapsedTime = millis()-movementStartTime;
   for ( int leg = 0 ; leg <= 3 ; leg++ ) {
     unsigned int currentTimePosition;
     currentTimePosition = (millis()-movementStartTime+((movementSpeed/4)*(4-leg)))%movementSpeed;
     Serial.println(map( currentTimePosition,0,movementSpeed,hipMin,hipMax));
-    if (currentTimePosition <= legMovementDuration) { //a leg needs to be rised, no hip movement during this
+    if (currentTimePosition <= legMovementDuration) { //a leg needs to be risen, no hip movement during this action
       setLeg(legOrder[leg], legMaxRaise); 
     }
     else { //hip can be moved again (during putting down the leg too)
