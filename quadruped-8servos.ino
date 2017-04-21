@@ -108,17 +108,18 @@ void setup()
   pinMode(13, OUTPUT);  // LED pin
   
   // assign servos to pins and reposition
-  frh.attach(5); setHip(1, 41); delay(50);
+  frh.attach(5); setHip(1, 45); delay(50);
   frl.attach(6); setLeg(1, 70); delay(50);
-  flh.attach(7); setHip(2, 7); delay(50);
+  flh.attach(7); setHip(2, 45); delay(50);
   fll.attach(8); setLeg(2, 70); delay(50);
-  rlh.attach(9); setHip(3, 32); delay(50);
+  rlh.attach(9); setHip(3, 45); delay(50);
   rll.attach(10); setLeg(3, 70); delay(50);
-  rrh.attach(11); setHip(4, -2); delay(50);
+  rrh.attach(11); setHip(4, 45); delay(50);
   rrl.attach(12); setLeg(4, 70); delay(50);
   
-  //delay(2000);
-  movementStartTime = millis();
+  delay(2000);
+  initMovement(1, 2000);
+  //movementStartTime = millis();
   //setServoMovement();
   //delay(1000000);
 }
@@ -130,44 +131,68 @@ void setup()
 
 unsigned int movementSpeed = 10000; //time for advancing for all 4 leg. bigger values are slower
 
- //move forward values:
-/*byte legOrder[] = {4, 1, 3, 2};
-int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
-int hipMax[] = {45, -23, 45, -23};*/
+byte legOrder[4];
+int hipMin[4];
+int hipMax[4];
 
- //move backward values:
-/*byte legOrder[] = {2, 3, 1, 4};
-int hipMin[] = {-23, 45, -23, 45}; //for corresponding legs in the legOrder list
-int hipMax[] = {45, -23, 45, -23};*/
-
- //move left values:
-/*byte legOrder[] = {1, 2, 4, 3};
-int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-int hipMax[] = {23, 90, 23, 90};*/
-
- //move right values:
-/*byte legOrder[] = {3, 4, 2, 1};
-int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-int hipMax[] = {23, 90, 23, 90};*/
-
- //turn left values:
-/*byte legOrder[] = {1, 2, 3, 4};
-int hipMin[] = {68, 0, 68, 0}; //for corresponding legs in the legOrder list
-int hipMax[] = {0, 68, 0, 68};*/
-
- //turn right values:
-byte legOrder[] = {4, 3, 2, 1};
-int hipMin[] = {68, 0, 68, 0}; //for corresponding legs in the legOrder list
-int hipMax[] = {0, 68, 0, 68};
-
-int calcHipValues[4] = {-100,-100,-100,-100};
+int calcHipValues[4];
 
 void loop() {  
-  servoValues(0, 0, 500, 1000, legOrder, hipMin, hipMax);
-  byte legOrder[] = {1, 2, 4, 3};
-int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-int hipMax[] = {23, 90, 23, 90};
-  // find the closest match between current hip positions and hip positions in with a movement
+  setServoMovement();
+}
+
+void setDirectionVariables(byte desDirection) {
+  switch (desDirection) {
+        case 1: //move forward
+          legOrder[0] = 4; legOrder[1] = 1; legOrder[2] = 3; legOrder[3] = 2;
+          hipMin[0] = -23; hipMin[1] = 45; hipMin[2] = -23; hipMin[3] = 45; //for corresponding legs in the legOrder list
+          hipMax[0] = 45; hipMax[1] = -23; hipMax[2] = 45; hipMax[3] = -23;
+          break;
+        case 2: //move backward
+          legOrder[0] = 2; legOrder[1] = 3; legOrder[2] = 1; legOrder[3] = 4;
+          hipMin[0] = -23; hipMin[1] = 45; hipMin[2] = -23; hipMin[3] = 45; 
+          hipMax[0] = 45; hipMax[1] = -23; hipMax[2] = 45; hipMax[3] = -23;
+          break;
+        case 3: //move left
+          legOrder[0] = 1; legOrder[1] = 2; legOrder[2] = 4; legOrder[3] = 3;
+          hipMin[0] = 90; hipMin[1] = 23; hipMin[2] = 90; hipMin[3] = 23; 
+          hipMax[0] = 23; hipMax[1] = 90; hipMax[2] = 23; hipMax[3] = 90;
+          break;
+        case 4: //move right
+          legOrder[0] = 3; legOrder[1] = 2; legOrder[2] = 2; legOrder[3] = 1;
+          hipMin[0] = 90; hipMin[1] = 23; hipMin[2] = 90; hipMin[3] = 23; 
+          hipMax[0] = 23; hipMax[1] = 90; hipMax[2] = 23; hipMax[3] = 90;
+          break;
+        case 5: //turn left
+          legOrder[0] = 1; legOrder[1] = 2; legOrder[2] = 3; legOrder[3] = 4;
+          hipMin[0] = 68; hipMin[1] = 0; hipMin[2] = 68; hipMin[3] = 0; 
+          hipMax[0] = 0; hipMax[1] = 68; hipMax[2] = 0; hipMax[3] = 68;
+          break;
+        case 6: //turn right
+          legOrder[0] = 4; legOrder[1] = 3; legOrder[2] = 2; legOrder[3] = 1;
+          hipMin[0] = 68; hipMin[1] = 0; hipMin[2] = 68; hipMin[3] = 0; 
+          hipMax[0] = 0; hipMax[1] = 68; hipMax[2] = 0; hipMax[3] = 68;
+          break;
+      }
+
+}
+
+
+void initMovement(byte desiredDirection, unsigned int newMovementSpeed) {
+  //A: calculate new hip positions (finds closest match) based on:
+    //- the current hip positions
+    //- and the desired movement 
+  //B: move hips into the new positions without changing the body direction
+  //C: calculate the new movementStartTime so the desired movement can be continued from the new hip positions - and set the new movementStartTime as well
+  
+  setDirectionVariables(desiredDirection);
+  movementSpeed = newMovementSpeed;
+  
+  int closestHipValues[4];
+  int savedCalcTime;
+
+  // A:
+  // find the closest match between current hip positions and possible hip positions in a movement
   int minDiffHips = 5000;
   Serial.print(currHipValues[0]); Serial.print(" # "); Serial.print(currHipValues[1]); Serial.print(" # "); Serial.print(currHipValues[2]); Serial.print(" # "); Serial.println(currHipValues[3]);
   unsigned long startmicro = micros();
@@ -178,29 +203,77 @@ int hipMax[] = {23, 90, 23, 90};
       int oneHipDiff = (calcHipValues[hip] - currHipValues[hip]);
       allHipDiff += abs(oneHipDiff); //abs function advice: keep other math outside the function
     }
-    if (minDiffHips > allHipDiff) minDiffHips = allHipDiff;
+    if (minDiffHips > allHipDiff) {
+      minDiffHips = allHipDiff;
+      closestHipValues[0] = calcHipValues[0];
+      closestHipValues[1] = calcHipValues[1];
+      closestHipValues[2] = calcHipValues[2];
+      closestHipValues[3] = calcHipValues[3];
+      savedCalcTime = calctime;
+    }
+    if (minDiffHips == 0) break;
     
-    Serial.print(calctime); Serial.print(" ::: ");
+    /*Serial.print(calctime); Serial.print(" ::: ");
     Serial.print(allHipDiff); Serial.print(" <> "); 
-    Serial.print(calcHipValues[0]); Serial.print(" # "); Serial.print(calcHipValues[1]); Serial.print(" # "); Serial.print(calcHipValues[2]); Serial.print(" # "); Serial.println(calcHipValues[3]);
-   
+    Serial.print(calcHipValues[0]); Serial.print(" # "); Serial.print(calcHipValues[1]); Serial.print(" # ");
+    Serial.print(calcHipValues[2]); Serial.print(" # "); Serial.println(calcHipValues[3]);*/
+    
   }
   unsigned long endmicro = micros();
   Serial.print("Min hip diff: ");Serial.println(minDiffHips);
-  Serial.print("Calc time: ");Serial.println(endmicro-startmicro);
-  delay(200000);
+  //Serial.print("Calc time: ");Serial.println(endmicro-startmicro);
+
+
+  // B:
+  // closestHipValues[] contains the new hip positions
+  // lift two opposite legs (1 and 3), turn the hips and put the legs down
+  if (minDiffHips > 0) {
+    int legMaxRaise = 25;
+    int legsOnGround = 70;
+    int legMovementDuration =  200; //for raising a leg
+    int hipMovementDuration =  200; //for moving the hip into a new position while the leg is raised
+  
+    setLeg(1, legMaxRaise);
+    setLeg(3, legMaxRaise);
+    delay(legMovementDuration);
+    setHip(1, closestHipValues[0]);
+    setHip(3, closestHipValues[2]);
+    delay(hipMovementDuration);
+    setLeg(1, legsOnGround);
+    setLeg(3, legsOnGround);
+    delay(legMovementDuration);
+    delay(2000);
+  
+    // lift the other two opposite legs (2 and 4), turn the hips and put the legs down
+    setLeg(2, legMaxRaise);
+    setLeg(4, legMaxRaise);
+    delay(legMovementDuration);
+    setHip(2, closestHipValues[1]);
+    setHip(4, closestHipValues[3]);
+    delay(hipMovementDuration);
+    setLeg(2, legsOnGround);
+    setLeg(4, legsOnGround);
+    delay(legMovementDuration);
+    delay(5000);
+  }
+
+  //C:
+  movementStartTime = millis() - ((savedCalcTime/float(1000))*movementSpeed);
+  
 }
 
+
+
 void setServoMovement() {
-  servoValues(0, movementStartTime, millis(), movementSpeed, legOrder, hipMin, hipMax);
+  servoValues(1, movementStartTime, millis(), movementSpeed, legOrder, hipMin, hipMax);
 }
 
 void servoValues(byte action, unsigned long movementStartTime_fun, unsigned long currentTime_fun, int movementSpeed_fun, byte legOrder_fun[], int hipMin_fun[], int hipMax_fun[]) {
   //action 1 means issue servo change, else write into the calcHipValues[] array
-  int legMaxRaise = 25;
+  int legMaxRaise = 0 ;
   int legsOnGround = 70;
-  int legMovementDuration =  50; //for raising a leg
-  int hipMovementDuration =  75; //for moving the hip into a new position while the leg is raised
+  int legMovementDuration =  100; //for raising a leg
+  int hipMovementDuration =  100; //for moving the hip into a new position while the leg is raised
     
   unsigned long elapsedTime = currentTime_fun-movementStartTime_fun;
   for ( byte leg = 0 ; leg <= 3 ; leg++ ) {
@@ -215,7 +288,8 @@ void servoValues(byte action, unsigned long movementStartTime_fun, unsigned long
           setLeg(legOrder_fun[leg], legsOnGround);
         }
         //move hip
-        setHip(legOrder_fun[leg] , calculatedHipValue);      
+        setHip(legOrder_fun[leg] , calculatedHipValue);
+        //Serial.print(legOrder_fun[leg]); Serial.print("->"); Serial.println(calculatedHipValue);
       }
     }
     else { //just put the results in the array - we need the hip value in every position even when we the leg should be lifted up
