@@ -114,7 +114,9 @@ void setup()
   delay(2000);
   movementStartTime = millis();
   setServoMovement();
-  //delay(1000000);
+  delay(5000);
+  movementStartTime = millis();
+  setServoMovement();
 }
 
 
@@ -155,14 +157,14 @@ int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
 int hipMax[] = {23, 90, 23, 90};*/
 
  //turn left values:
-byte legOrder[] = {3, 4, 2, 1};
-int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-int hipMax[] = {23, 90, 23, 90};
+/*byte legOrder[] = {1, 2, 3, 4};
+int hipMin[] = {68, 0, 68, 0}; //for corresponding legs in the legOrder list
+int hipMax[] = {0, 68, 0, 68};*/
 
  //turn right values:
-/*byte legOrder[] = {3, 4, 2, 1};
-int hipMin[] = {90, 23, 90, 23}; //for corresponding legs in the legOrder list
-int hipMax[] = {23, 90, 23, 90};*/
+byte legOrder[] = {4, 3, 2, 1};
+int hipMin[] = {68, 0, 68, 0}; //for corresponding legs in the legOrder list
+int hipMax[] = {0, 68, 0, 68};
 
 void setServoMovement() {
   unsigned long elapsedTime = millis()-movementStartTime;
